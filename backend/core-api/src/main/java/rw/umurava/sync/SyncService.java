@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import rw.umurava.community.CommunityMembershipRepository;
 import java.sql.Timestamp;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,7 @@ public class SyncService {
     }
 
     public record DeviceResult(UUID deviceId, UUID communityId, String status) {}
-    public record PushResult(UUID eventId, String result) {}
+    public record PushResult(UUID eventId, String result, long serverSequence) {}
     public record SyncEventResult(UUID id, UUID communityId, UUID deviceId, String entityType,
                                   UUID entityId, String operation, JsonNode payload,
                                   long eventVersion, Instant eventCreatedAt, long serverSequence) {}
@@ -67,6 +68,11 @@ public class SyncService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Event device and community must match the sync request");
             }
+            if (event.entityType().length() > 80 || event.payload() == null || event.payload().isNull()
+                    || event.payload().toString().getBytes(StandardCharsets.UTF_8).length > 16_384
+                    || event.eventCreatedAt().isAfter(Instant.now().plusSeconds(300))) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Event payload or metadata exceeds allowed limits");
+            }
             if (!List.of("UPSERT", "DELETE").contains(event.operation())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported sync operation");
             }
@@ -85,7 +91,7 @@ public class SyncService {
                 event.operation(), payload, event.eventVersion(), Timestamp.from(event.eventCreatedAt()));
 
             if (inserted == 1) {
-                results.add(new PushResult(event.id(), "ACCEPTED"));
+                results.add(new PushResult(event.id(), "ACCEPTED", serverSequence(event.id())));
             } else {
                 boolean same = jdbc.query("""
                     SELECT EXISTS(SELECT 1 FROM sync_events
@@ -99,7 +105,7 @@ public class SyncService {
                     throw new ResponseStatusException(HttpStatus.CONFLICT,
                         "Event identifier was previously used with different content");
                 }
-                results.add(new PushResult(event.id(), "DUPLICATE"));
+                results.add(new PushResult(event.id(), "DUPLICATE", serverSequence(event.id())));
             }
         }
         jdbc.update("UPDATE community_devices SET last_seen_at = NOW() WHERE id = ?", deviceId);
@@ -148,6 +154,11 @@ public class SyncService {
         }
         jdbc.update("UPDATE community_devices SET last_seen_at = NOW() WHERE id = ?", deviceId);
         return accepted;
+    }
+
+    private long serverSequence(UUID eventId) {
+        Long sequence = jdbc.queryForObject("SELECT server_sequence FROM sync_events WHERE id = ?", Long.class, eventId);
+        return sequence == null ? 0L : sequence;
     }
 
     private JsonNode parsePayload(String json) {
