@@ -37,6 +37,32 @@ class SyncOutbox {
     return id;
   }
 
+
+  Future<String> saveResourceChange({
+    required Map<String, Object?> resource,
+    required String communityId,
+    required String deviceId,
+    required String entityId,
+    required String operation,
+    required Map<String, Object?> payload,
+    DateTime? createdAt,
+  }) async {
+    final id = _uuid.v4();
+    final timestamp = (createdAt ?? DateTime.now()).toUtc();
+    await _database.saveResourceAndEnqueue(
+      resource: resource,
+      eventId: id,
+      communityId: communityId,
+      deviceId: deviceId,
+      entityType: 'RESOURCE',
+      entityId: entityId,
+      operation: operation,
+      payloadJson: jsonEncode(payload),
+      createdAt: timestamp,
+    );
+    return id;
+  }
+
   Future<List<Map<String, Object?>>> pendingBatch({
     int limit = 100,
     DateTime? now,
