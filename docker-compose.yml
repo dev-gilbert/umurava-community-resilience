@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-umurava}
+      POSTGRES_USER: ${POSTGRES_USER:-umurava}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - umurava-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-umurava} -d ${POSTGRES_DB:-umurava}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  api:
+    build: ./backend/core-api
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/umurava}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-umurava}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?Set SPRING_DATASOURCE_PASSWORD in .env}
+      UMURAVA_CORS_ORIGINS: ${UMURAVA_CORS_ORIGINS:-http://localhost:3000}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+  web:
+    build: ./apps/web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:${API_PORT:-8080}/api/v1
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      - api
+volumes:
+  umurava-postgres:
