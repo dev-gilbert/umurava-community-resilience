@@ -122,7 +122,7 @@ public class SyncService {
                 rs.getObject("id", UUID.class), rs.getObject("community_id", UUID.class),
                 rs.getObject("device_id", UUID.class), rs.getString("entity_type"),
                 rs.getObject("entity_id", UUID.class), rs.getString("operation"),
-                mapper.readTree(rs.getString("payload_text")), rs.getLong("event_version"),
+                parsePayload(rs.getString("payload_text")), rs.getLong("event_version"),
                 rs.getTimestamp("event_created_at").toInstant(), rs.getLong("server_sequence")
             ), communityId, Math.max(0, cursor), safeLimit + 1);
         boolean hasMore = events.size() > safeLimit;
@@ -148,6 +148,14 @@ public class SyncService {
         }
         jdbc.update("UPDATE community_devices SET last_seen_at = NOW() WHERE id = ?", deviceId);
         return accepted;
+    }
+
+    private JsonNode parsePayload(String json) {
+        try {
+            return mapper.readTree(json);
+        } catch (Exception exception) {
+            throw new IllegalStateException("Stored sync event contains invalid JSON", exception);
+        }
     }
 
     private void requireMembership(UUID userId, UUID communityId) {
