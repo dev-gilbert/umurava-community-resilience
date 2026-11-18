@@ -122,6 +122,44 @@ class LocalDatabase {
     );
   }
 
+
+  Future<void> saveResourceAndEnqueue({
+    required Map<String, Object?> resource,
+    required String eventId,
+    required String communityId,
+    required String deviceId,
+    required String entityType,
+    required String entityId,
+    required String operation,
+    required String payloadJson,
+    required DateTime createdAt,
+  }) async {
+    final db = await database;
+    await db.transaction((transaction) async {
+      await transaction.insert(
+        'local_resources',
+        resource,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      await transaction.insert(
+        'outbox',
+        {
+          'event_id': eventId,
+          'community_id': communityId,
+          'device_id': deviceId,
+          'entity_type': entityType,
+          'entity_id': entityId,
+          'operation': operation,
+          'payload': payloadJson,
+          'created_at': createdAt.toUtc().toIso8601String(),
+          'attempts': 0,
+          'status': 'PENDING',
+        },
+        conflictAlgorithm: ConflictAlgorithm.abort,
+      );
+    });
+  }
+
   Future<List<Map<String, Object?>>> pendingEvents({
     int limit = 100,
     DateTime? now,
