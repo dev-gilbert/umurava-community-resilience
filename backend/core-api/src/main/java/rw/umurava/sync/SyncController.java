@@ -23,11 +23,11 @@ public class SyncController {
     public record RegisterDeviceRequest(@NotNull UUID communityId, @NotNull UUID deviceId,
                                         @NotBlank @Size(max = 120) String label) {}
     public record PushRequest(@NotNull UUID communityId, @NotNull UUID deviceId,
-                              @Size(min = 1, max = 100) List<@Valid SyncEventInput> events) {}
+                              @NotNull @Size(min = 1, max = 100) List<@Valid SyncEventInput> events) {}
     public record PullRequest(@NotNull UUID communityId, @NotNull UUID deviceId,
                               long cursor, int limit) {}
     public record AckRequest(@NotNull UUID communityId, @NotNull UUID deviceId,
-                             @Size(min = 1, max = 200) List<@NotNull UUID> eventIds) {}
+                             @NotNull @Size(min = 1, max = 200) List<@NotNull UUID> eventIds) {}
 
     @PostMapping("/devices")
     @ResponseStatus(HttpStatus.CREATED)
