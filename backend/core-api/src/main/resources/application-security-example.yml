@@ -1,0 +1,11 @@
+# Example only. Import/merge into the active profile and supply values via environment/secret manager.
+# Never commit real signing keys or database passwords.
+umurava:
+  security:
+    issuer: ${UMURAVA_JWT_ISSUER:https://api.example.invalid}
+    audience: ${UMURAVA_JWT_AUDIENCE:umurava-clients}
+    access-token-ttl: PT10M
+    refresh-token-ttl: P30D
+    signing-key: ${UMURAVA_JWT_SIGNING_KEY:}
+  cors:
+    allowed-origins: ${UMURAVA_CORS_ORIGINS:http://localhost:3000}
