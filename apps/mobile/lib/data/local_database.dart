@@ -132,7 +132,7 @@ class LocalDatabase {
       where: "status IN ('PENDING','RETRY') AND (next_retry_at IS NULL OR next_retry_at <= ?)",
       whereArgs: [currentTime],
       orderBy: 'created_at ASC',
-      limit: limit.clamp(1, 100),
+      limit: limit.clamp(1, 100).toInt(),
     );
   }
 
@@ -157,8 +157,8 @@ class LocalDatabase {
     DateTime? now,
   }) async {
     final nextAttempt = currentAttempts + 1;
-    final delaySeconds = (5 * (1 << (nextAttempt - 1).clamp(0, 10)))
-        .clamp(5, 3600);
+    final exponent = (nextAttempt - 1).clamp(0, 10).toInt();
+    final delaySeconds = (5 * (1 << exponent)).clamp(5, 3600).toInt();
     final retryAt = (now ?? DateTime.now())
         .toUtc()
         .add(Duration(seconds: delaySeconds))
