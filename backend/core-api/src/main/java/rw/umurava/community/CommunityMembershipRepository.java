@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public interface CommunityMembershipRepository extends JpaRepository<CommunityMembership, UUID> {
     List<CommunityMembership> findAllByUserIdAndStatus(UUID userId, String status);
+    boolean existsByUserIdAndCommunityIdAndStatus(UUID userId, UUID communityId, String status);
     List<CommunityMembership> findAllByCommunityIdAndStatus(UUID communityId, String status);
     Optional<CommunityMembership> findByUserIdAndCommunityIdAndRoleAndStatus(
         UUID userId, UUID communityId, String role, String status
