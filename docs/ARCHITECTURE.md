@@ -11,5 +11,14 @@ Local writes must be durable before the client reports success. A disconnected p
 ## Backend
 Start with a modular monolith. PostgreSQL is the source of truth for each deployment tier. Flyway manages schema migrations. Inventory must use an immutable transaction ledger and atomic updates; do not overwrite stock totals from clients.
 
-## Security
-The Sprint 01 API denies non-public routes by default. Sprint 02 implements identity and scoped authorization. Do not deploy with public access to community or resource data.
+## Identity and authorization
+- Passwords are hashed with BCrypt.
+- Access tokens are short-lived JWTs; refresh tokens are random opaque values stored as SHA-256 hashes.
+- Refresh tokens rotate on use. A reused/expired token revokes active sessions in its token family.
+- Community membership is scoped by community ID; roles in one community do not confer access to another.
+- Public registration creates an account only, not a community membership or administrator role.
+- Initial community administrator provisioning requires a controlled operator process.
+- Unknown API routes remain denied by default.
+
+## Release limitations
+Sprint 02 implements the initial identity and community-membership authorization foundation. Rate limiting, MFA, device lifecycle management, privileged bootstrap tooling, external secret management, security monitoring and independent security testing remain outstanding. Do not expose the development stack publicly or enter real patient/sensitive personal data.

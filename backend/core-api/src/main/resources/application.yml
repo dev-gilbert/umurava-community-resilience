@@ -27,3 +27,7 @@ management:
 umurava:
   cors:
     allowed-origins: ${UMURAVA_CORS_ORIGINS:http://localhost:3000}
+  jwt:
+    secret: ${UMURAVA_JWT_SECRET:local-only-change-this-development-secret-32-bytes-minimum}
+    issuer: ${UMURAVA_JWT_ISSUER:umurava-local}
+    expiration-minutes: ${UMURAVA_JWT_EXPIRATION_MINUTES:10}
