@@ -63,3 +63,19 @@ jobs:
       - name: Analyze mobile
         working-directory: apps/mobile
         run: flutter analyze --no-fatal-infos
+  forecasting:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/forecasting
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: services/forecasting/requirements-dev.txt
+      - name: Install forecasting dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Test forecasting baseline
+        run: pytest -q
