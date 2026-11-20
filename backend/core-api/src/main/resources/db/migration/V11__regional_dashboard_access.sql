@@ -1,0 +1,2 @@
+CREATE TABLE regional_access_grants (id UUID PRIMARY KEY, user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE, scope_type VARCHAR(20) NOT NULL CHECK(scope_type IN ('DISTRICT','NATIONAL')), scope_value VARCHAR(120) NOT NULL, granted_by UUID REFERENCES app_users(id), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), UNIQUE(user_id,scope_type,scope_value));
+CREATE INDEX idx_regional_grants_scope ON regional_access_grants(scope_type,lower(scope_value));
