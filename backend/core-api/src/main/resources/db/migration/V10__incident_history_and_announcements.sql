@@ -1,0 +1,7 @@
+ALTER TABLE emergency_incidents ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), ADD COLUMN resolved_at TIMESTAMPTZ;
+CREATE INDEX idx_incidents_community_created ON emergency_incidents(community_id,created_at DESC);
+CREATE TABLE incident_updates (id UUID PRIMARY KEY, incident_id UUID NOT NULL REFERENCES emergency_incidents(id) ON DELETE CASCADE, community_id UUID NOT NULL REFERENCES communities(id), actor_user_id UUID REFERENCES app_users(id), previous_status VARCHAR(30), new_status VARCHAR(30) NOT NULL, note VARCHAR(1000), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE INDEX idx_incident_updates_incident_time ON incident_updates(incident_id,created_at);
+CREATE TABLE community_announcements (id UUID PRIMARY KEY, community_id UUID NOT NULL REFERENCES communities(id), title VARCHAR(180) NOT NULL, message VARCHAR(3000) NOT NULL, priority VARCHAR(20) NOT NULL DEFAULT 'NORMAL', starts_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), expires_at TIMESTAMPTZ, published_by UUID REFERENCES app_users(id), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), CHECK(expires_at IS NULL OR expires_at > starts_at));
+CREATE INDEX idx_announcements_community_active ON community_announcements(community_id,starts_at,expires_at);
+CREATE TABLE announcement_receipts (announcement_id UUID NOT NULL REFERENCES community_announcements(id) ON DELETE CASCADE, user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE, acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY(announcement_id,user_id));
