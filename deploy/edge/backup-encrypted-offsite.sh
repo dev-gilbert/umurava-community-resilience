@@ -10,10 +10,10 @@ command -v age >/dev/null || { echo "Install age" >&2; exit 1; }
 command -v rclone >/dev/null || { echo "Install rclone and configure an encrypted/secured remote" >&2; exit 1; }
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 TMP="$(mktemp)"
-trap 'rm -f "$TMP" "${TMP}.age"' EXIT
+trap 'rm -f "$TMP" "${TMP}.age" "${TMP}.age.sha256"' EXIT
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T edge-postgres sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' | gzip -9 > "$TMP"
 age -r "$AGE_RECIPIENT" -o "${TMP}.age" "$TMP"
-sha256sum "${TMP}.age" > "${TMP}.age.sha256"
+sha256sum "${TMP}.age" | awk '{print $1}' > "${TMP}.age.sha256"
 rclone copyto "${TMP}.age" "$RCLONE_REMOTE/umurava-edge-$STAMP.sql.gz.age"
 rclone copyto "${TMP}.age.sha256" "$RCLONE_REMOTE/umurava-edge-$STAMP.sql.gz.age.sha256"
 echo "Encrypted backup uploaded: $RCLONE_REMOTE/umurava-edge-$STAMP.sql.gz.age"
