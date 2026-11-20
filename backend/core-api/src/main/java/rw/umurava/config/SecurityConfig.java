@@ -23,7 +23,7 @@ public class SecurityConfig {
  @Bean SecurityFilterChain securityFilterChain(HttpSecurity http)throws Exception{
   return http.csrf(AbstractHttpConfigurer::disable).cors(cors->{}).sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
    .httpBasic(AbstractHttpConfigurer::disable).formLogin(AbstractHttpConfigurer::disable)
-   .authorizeHttpRequests(a->a.requestMatchers(HttpMethod.GET,"/actuator/health","/api/v1/system/info").permitAll()
+   .authorizeHttpRequests(a->a.requestMatchers(HttpMethod.GET,"/actuator/health","/api/v1/system/info","/actuator/prometheus").permitAll()
     .requestMatchers(HttpMethod.POST,"/api/v1/auth/register","/api/v1/auth/login","/api/v1/auth/refresh","/api/v1/auth/logout").permitAll()
     .requestMatchers(HttpMethod.GET,"/api/v1/auth/me").authenticated()
     .requestMatchers("/api/v1/me/communities","/api/v1/communities/**","/api/v1/sync/**","/api/v1/command/**").authenticated()
