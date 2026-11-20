@@ -39,7 +39,7 @@ public class SyncProcessingService {
             JOIN community_devices d ON d.id=e.device_id AND d.status='ACTIVE'
             WHERE e.community_id=? AND e.status='RECEIVED'
             ORDER BY e.server_sequence
-            FOR UPDATE OF e SKIP LOCKED LIMIT ?
+            LIMIT ? FOR UPDATE OF e SKIP LOCKED
             """, communityId, Math.max(1, Math.min(limit, 200)));
         int applied=0, conflicted=0, rejected=0;
         for (Map<String,Object> e : events) {
@@ -96,7 +96,7 @@ public class SyncProcessingService {
         if (!List.of("ACCEPT_INCOMING","REJECT_INCOMING").contains(decision))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Unsupported conflict decision");
         List<Map<String,Object>> rows=jdbc.queryForList("""
-            SELECT c.event_id,c.entity_type,c.entity_id,c.received_version,c.incoming_payload::text AS payload
+            SELECT c.event_id,c.entity_type,c.entity_id,c.expected_version,c.incoming_payload::text AS payload
             FROM sync_conflicts c WHERE c.id=? AND c.community_id=? AND c.status='OPEN' FOR UPDATE
             """,conflictId,communityId);
         if(rows.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Open conflict not found");
@@ -108,7 +108,7 @@ public class SyncProcessingService {
                 VALUES (?,?,?,?,CAST(? AS jsonb),FALSE,?)
                 ON CONFLICT(community_id,entity_type,entity_id) DO UPDATE SET
                   version=EXCLUDED.version,payload=EXCLUDED.payload,deleted=FALSE,last_event_id=EXCLUDED.last_event_id,updated_at=NOW()
-                """,communityId,c.get("entity_type"),c.get("entity_id"),c.get("received_version"),c.get("payload"),eventId);
+                """,communityId,c.get("entity_type"),c.get("entity_id"),c.get("expected_version"),c.get("payload"),eventId);
             jdbc.update("UPDATE sync_events SET status='APPLIED',processing_error=NULL WHERE id=?",eventId);
         } else jdbc.update("UPDATE sync_events SET status='REJECTED' WHERE id=?",eventId);
         jdbc.update("UPDATE sync_conflicts SET status=?,resolved_by=?,resolved_at=NOW() WHERE id=?",
