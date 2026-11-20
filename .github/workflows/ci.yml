@@ -79,3 +79,23 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Test forecasting baseline
         run: pytest -q
+
+  edge-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate edge relay agent
+        run: |
+          python -m pip install -r services/edge-sync-agent/requirements.txt
+          python -m py_compile services/edge-sync-agent/agent.py
+      - name: Validate operations and acceptance scripts
+        run: |
+          bash -n deploy/edge/backup.sh
+          bash -n deploy/edge/restore.sh
+          bash -n deploy/edge/backup-encrypted-offsite.sh
+          bash -n deploy/edge/dr-exercise.sh
+          bash -n deploy/edge/smoke-test.sh
+          bash -n tests/e2e/community-modules.sh

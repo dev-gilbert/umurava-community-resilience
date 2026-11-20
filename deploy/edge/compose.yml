@@ -29,6 +29,26 @@ services:
     depends_on:
       edge-postgres:
         condition: service_healthy
+  edge-sync-agent:
+    profiles: ["sync"]
+    build: ../../services/edge-sync-agent
+    restart: unless-stopped
+    environment:
+      CLOUD_API_URL: ${CLOUD_API_URL:?Set CLOUD_API_URL}
+      CLOUD_ACCESS_TOKEN: ${CLOUD_ACCESS_TOKEN:-}
+      CLOUD_REFRESH_TOKEN: ${CLOUD_REFRESH_TOKEN:?Set CLOUD_REFRESH_TOKEN}
+      EDGE_API_URL: http://edge-api:8080
+      EDGE_ACCESS_TOKEN: ${EDGE_ACCESS_TOKEN:-}
+      EDGE_REFRESH_TOKEN: ${EDGE_REFRESH_TOKEN:?Set EDGE_REFRESH_TOKEN}
+      SYNC_COMMUNITY_ID: ${SYNC_COMMUNITY_ID:?Set SYNC_COMMUNITY_ID}
+      SYNC_DEVICE_ID: ${SYNC_DEVICE_ID:?Set SYNC_DEVICE_ID}
+      SYNC_POLL_SECONDS: ${SYNC_POLL_SECONDS:-10}
+      SYNC_STATE_PATH: /state/edge-sync.sqlite3
+    volumes:
+      - umurava-edge-sync-state:/state
+    depends_on:
+      edge-api:
+        condition: service_started
   prometheus:
     image: prom/prometheus:v3.5.0
     profiles: ["monitoring"]
@@ -58,3 +78,4 @@ volumes:
   umurava-edge-postgres:
   umurava-edge-prometheus:
   umurava-edge-grafana:
+  umurava-edge-sync-state:

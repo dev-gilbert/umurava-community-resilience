@@ -1,0 +1,19 @@
+name: UMURAVA module end-to-end acceptance
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  community-modules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Run seven-module acceptance suite
+        env:
+          UMURAVA_API_URL: ${{ secrets.UMURAVA_E2E_API_URL }}
+          UMURAVA_E2E_EMAIL: ${{ secrets.UMURAVA_E2E_EMAIL }}
+          UMURAVA_E2E_PASSWORD: ${{ secrets.UMURAVA_E2E_PASSWORD }}
+          UMURAVA_E2E_COMMUNITY_ID: ${{ secrets.UMURAVA_E2E_COMMUNITY_ID }}
+        run: bash tests/e2e/community-modules.sh
