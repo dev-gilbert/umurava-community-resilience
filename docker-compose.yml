@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-umurava}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - umurava-postgres:/var/lib/postgresql/data
     healthcheck:
@@ -22,9 +22,12 @@ services:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/umurava}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-umurava}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?Set SPRING_DATASOURCE_PASSWORD in .env}
-      UMURAVA_CORS_ORIGINS: ${UMURAVA_CORS_ORIGINS:-http://localhost:3000}
+      UMURAVA_JWT_SECRET: ${UMURAVA_JWT_SECRET:?Set UMURAVA_JWT_SECRET in .env}
+      UMURAVA_JWT_ISSUER: ${UMURAVA_JWT_ISSUER:?Set UMURAVA_JWT_ISSUER in .env}
+      UMURAVA_JWT_EXPIRATION_MINUTES: ${UMURAVA_JWT_EXPIRATION_MINUTES:-10}
+      UMURAVA_CORS_ORIGINS: ${UMURAVA_CORS_ORIGINS:?Set UMURAVA_CORS_ORIGINS in .env}
     ports:
-      - "${API_PORT:-8080}:8080"
+      - "${API_BIND_ADDRESS:-127.0.0.1}:${API_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -33,9 +36,9 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:${API_PORT:-8080}/api/v1
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:?Set NEXT_PUBLIC_API_BASE_URL in .env}
     ports:
-      - "${WEB_PORT:-3000}:3000"
+      - "${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-3000}:3000"
     depends_on:
       - api
   forecasting:
