@@ -31,7 +31,7 @@ request GET "/api/v1/me/communities" >/dev/null
 request GET "/api/v1/communities/$C/memberships" >/dev/null
 
 # 2. Shared resource registry
-RESOURCE="$(request POST "/api/v1/communities/$C/resources" "$(jq -n --arg n "E2E resource $STAMP" '{name:$n,category:"GENERAL",description:"Automated acceptance test",quantity:10,minimumQuantity:1,unit:"units}')" 201)"
+RESOURCE="$(request POST "/api/v1/communities/$C/resources" "$(jq -n --arg n "E2E resource $STAMP" '{name:$n,category:"OTHER",description:"Automated acceptance test",quantity:10,minimumQuantity:1,unit:"units}')" 201)"
 RID="$(jq -r '.id' <<<"$RESOURCE")"
 [[ "$RID" != null && -n "$RID" ]]
 
